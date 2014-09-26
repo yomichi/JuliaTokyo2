@@ -1,0 +1,73 @@
+\documentclass[dvipdfmx]{beamer}
+\usepackage{mytheme}
+\setbeamercovered{transparent=0}
+
+\input{header_listing.tex}
+
+\title{Julia 開発の道具箱（チューニング編）}
+\author{Yuichi Motoyama}
+\date{JuliaTokyo \#2 2014/09/27}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+  スライドとサンプルコード \\ 
+  https://github.com/yomichi/JuliaTokyo2
+\end{frame}
+
+\begin{frame}[containsverbatim]
+  \frametitle{自己紹介}
+  \begin{columns}
+    \begin{column}{.8\linewidth}
+  \begin{itemize}
+    \item HN : 夜道, yomichi
+    \item twitter : \verb|@yomichi_137|
+    \item ぽすどくいちねんせい
+      \begin{itemize}
+        \item 統計物理学・計算物理学
+        \item 主にモンテカルロ法とか局在スピン系とか
+      \end{itemize}
+    \item イベント（勉強会）実況勢
+      \begin{itemize}
+        \item 最近だと全ゲ連（同人ゲーム開発）とか、PyConJP とか、JuliaTokyoとか
+        \item 自分で自分の発表は実況できないのがつらい
+      \end{itemize}
+    \item Julia nightly build 勢
+    \item Julia の開発環境は REPL と Vim
+    \item 去年の夏コミ・冬コミでJulia 本出してました
+      \begin{itemize}
+        \item blog とか締め切りがないので書けません＞＜
+        \item 抽選受かっていたら次の冬にも出します
+      \end{itemize}
+  \end{itemize}
+\end{column}
+\begin{column}{.3\linewidth}
+  \includegraphics[width=\linewidth]{sakuremi.jpg}
+
+  (thanks \verb|@am_11|)
+\end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}
+  \frametitle{今日のお話}
+  Julia 言語で書いたスクリプトの改善、つまり
+  \begin{itemize}
+    \item デバッグ
+    \item リファクタリング
+    \item チューニング
+  \end{itemize}
+  をするのに便利なツールを紹介！！
+  \onslide<2>
+
+  という予定でしたが、嬉しい事に思ったより話すことがあって時間がなさそうな気がするので、
+  前2つはツールの紹介だけ軽くして、今日は主にチューニングの話をします＞＜
+  \onslide
+\end{frame}
+
+\input{debug.tex}
+\input{refactoring.tex}
+\input{tuning.tex}
+
+\end{document}

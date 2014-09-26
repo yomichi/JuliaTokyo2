@@ -1,0 +1,417 @@
+\section{チューニング}
+
+\begin{frame}
+  \frametitle{}
+  {\Huge チューニング}
+\end{frame}
+
+\begin{frame}
+\frametitle{チューニング？}
+\begin{itemize}
+  \item プログラム自体の性能最適化
+  \begin{itemize}
+    \item なにを最適化したいのか考えてありますか？
+    \item 大抵は計算時間の最小化か、要求メモリの最小化
+    \item リファクタリングも保守性の最適化と言えなくもない
+  \end{itemize}
+  \item 最適化にもコスト・リソースが必要
+  \begin{itemize}
+    \item あなたのやりたいこと、本当に割に合いますか？
+    \item わざわざ時間をかけ、保守性を下げてまでやる必要はありますか？
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{格言集}
+{\Large
+\begin{itemize}
+  \item Donald Knuth
+  \begin{itemize}
+    {\Large
+    \item \onslide<2-> 時期尚早な最適化は諸悪の根源である \onslide
+    }
+  \end{itemize}
+  \item Michael A. Jackson
+  \begin{description}
+    \item [最適化の第一法則] \onslide<3-> するな。 \onslide
+    \item [最適化の第二法則] \onslide<4-> まだするな。（上級者限定） \onslide
+  \end{description}
+\end{itemize}
+}
+\onslide<5-> だからといって、明らかにダメなコードを放置していても良いわけじゃない。\\
+時間をかけて、ひねったコードを産み出してまで「最適化」するのは後にしろということ。\\
+\onslide<6-> せっかくJulia ちゃんを使うんだから少しぐらいはやってみよう！
+\end{frame}
+
+\begin{frame}
+  \frametitle{一般的な最適化のやりかた}
+    大前提として、正しく動くプログラム
+      （テストや要求仕様などに適合する）を書き上げる
+  \begin{enumerate}
+    \item プロファイラでホットスポットを探す
+    \item チューニングを試みる
+    \item テストを行って、エンバグしていないことを確かめる
+    \item 時間を測って効果を確認する
+    \item 妥協できるところまで繰り返す
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}[containsverbatim]
+\frametitle{Julia における性能測定ツール}
+\begin{itemize}
+  \item 全部\verb|Base| 直下にある標準ツール
+  \item 時間・メモリ両用
+    \begin{itemize}
+      \item \verb|@time| / \verb|@timed|
+    \end{itemize}
+  \item 時間
+    \begin{itemize}
+      \item \verb|@elapsed|
+      \item \verb|tic| / \verb|toc| / \verb|toq|
+      \item \verb|time_ns|
+    \end{itemize}
+  \item メモリ
+    \begin{itemize}
+      \item \verb|@allocated|
+    \end{itemize}
+  \item プロファイラ
+    \begin{itemize}
+      \item \verb|Profile| モジュール
+      \item \verb|--track-allocation=user|
+    \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[containsverbatim]
+  \frametitle{時間・メモリ測定ツール}
+  \begin{itemize}
+    \item \verb|@time(ex)| / \verb|@timed(ex)|
+      \begin{itemize}
+        \item 与えた式\verb|ex| に関して、実行時間・獲得メモリ・ガベコレ時間を測定する
+        \item \verb|@time| は測定結果を標準出力に出し、\verb|@timed| は返り値として返す
+        \item 基本的にはこれらを使えばOK
+      \end{itemize}
+  \end{itemize}
+  \begin{lstlisting}
+julia> @time sum(ones(1<<24))
+elapsed time: 0.094370607 seconds (134217888 bytes allocated, 24.31% gc time)  # STDOUT
+1.6777216e7  # 返り値
+
+julia> @timed sum(ones(1<<24))
+(1.6777216e7,0.101337356,134217888,0.022860107)  # 返り値
+  \end{lstlisting}
+\end{frame}
+
+\begin{frame}[containsverbatim]
+  \frametitle{時間測定ツール}
+  \begin{itemize}
+    \item \verb|@elapsed(ex)|
+      \begin{itemize}
+        \item 式\verb|ex| を実行し、かかった時間を秒単位で返す
+        \item \verb|ex| の値そのものは返さない（仕様）
+      \end{itemize}
+  \end{itemize}
+  \begin{lstlisting}
+julia> @elapsed sum(ones(1<<24))
+0.09623339   # 返り値
+  \end{lstlisting}
+\end{frame}
+
+\begin{frame}[containsverbatim]
+  \frametitle{時間測定ツール}
+  \begin{itemize}
+    \item \verb|tic()|
+      \begin{itemize}
+        \item 時間測定の基点をセットする
+      \end{itemize}
+    \item \verb|toq()|
+      \begin{itemize}
+        \item \verb|tic()| からの経過時間を秒単位で返す
+        \item \verb|toq()| すると\verb|tic()| で作った基点はなくなる
+      \end{itemize}
+    \item \verb|toc()|
+      \begin{itemize}
+        \item \verb|toq()| して、経過時間を\verb|println| する
+      \end{itemize}
+  \end{itemize}
+  \begin{lstlisting}
+julia> tic()
+0x0000a45b7e3a65c3  # 後述するtime_ns() の返り値
+
+julia> toc()
+elapsed time: 3.471314971 seconds  # STDOUT
+3.471314971  # 返り値
+
+julia> toc()
+ERROR: toc() without tic()
+ in toq at util.jl:28
+ in toc at util.jl:36
+  \end{lstlisting}
+\end{frame}
+
+\begin{frame}[containsverbatim]
+  \frametitle{時間測定ツール}
+  \begin{itemize}
+    \item \verb|time_ns|
+      \begin{itemize}
+        \item 現在時刻をナノ秒単位で返す
+        \item 返り値の型は \verb|UInt64|
+        \item ここまで紹介した関数・マクロは内部でこれを呼ぶ
+        \item ゼロ点が具体的にどこかは定められていない
+          \begin{itemize}
+            \item 5.8 年でオーバーフローするため
+          \end{itemize}
+      \end{itemize}
+  \end{itemize}
+  \begin{lstlisting}
+julia> time_ns()
+0x0000a44ebf7ad040
+
+julia> (time_ns() - ans)/1e9
+1.728456695
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[containsverbatim]
+\frametitle{メモリ測定ツール}
+\begin{itemize}
+  \item \verb|@allocated(ex)|
+    \begin{itemize}
+      \item 式\verb|ex| を実行し、その間に確保したメモリをByte 単位で返す
+      \item \verb|ex| の値そのものは返さない（仕様）
+      \item \verb|@timed(ex)| のメモリ版
+    \end{itemize}
+\end{itemize}
+\begin{lstlisting}
+julia> @allocated [1:1024]
+8256
+
+julia> @allocated []
+48
+\end{lstlisting}
+\begin{itemize}
+  \item 空配列を作るだけでもオーバーヘッドがあるっぽい
+\end{itemize}
+\end{frame}
+
+\begin{frame}[containsverbatim]
+\frametitle{プロファイラ}
+\begin{itemize}
+  \item \verb|Base.Profile| モジュール
+    \begin{itemize}
+      \item 統計的プロファイラ
+      \item 周期的に(標準では1ミリ秒) どの行にいるのかを調べることで、どこでどのくらいの時間を費やしたのかを調べる
+      \item バックトレースを見ているので、どの関数呼び出しから呼ばれているのかも区別可能
+    \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[containsverbatim]
+\frametitle{プロファイラ}
+\begin{lstlisting}
+julia> function prof(N::Int=100)
+       xs = rand(N,N,N)
+       x = maximum(xs)
+       ys = rand(N,N,N)
+       y = maximum(ys)
+       x - y
+       nothing
+       end
+\end{lstlisting}
+\begin{itemize}
+  \item この関数を調べてみる（公式ドキュメントの例をほんの少しだけ複雑にした）
+\end{itemize}
+\end{frame}
+
+\begin{frame}[containsverbatim]
+\frametitle{プロファイラ}
+\begin{lstlisting}
+julia> prof()  # 関数のJITコンパイル
+
+julia> Profile.clear()  # 以前に測定していたら消去しておく
+
+julia> @profile prof(200) # 測定
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[containsverbatim]
+\frametitle{プロファイラ}
+\begin{lstlisting}
+julia> Profile.print()
+95 task.jl; anonymous; line: 96
+ 94 REPL.jl; eval_user_input; line: 54
+  94 profile.jl; anonymous; line: 14
+   43 none; prof; line: 2
+    43 random.jl; rand!; line: 132
+   5  none; prof; line: 3
+    5 reduce.jl; _mapreduce; line: 168
+     2 reduce.jl; mapreduce_impl; line: 281
+     3 reduce.jl; mapreduce_impl; line: 285
+   41 none; prof; line: 4
+    41 random.jl; rand!; line: 132
+   5  none; prof; line: 5
+        ## ... 以下略
+ \end{lstlisting}
+ \begin{itemize}
+   \item 各行は頭から観測回数、ファイル名、関数名、行数
+ \end{itemize}
+ \end{frame}
+ 
+ \begin{frame}[containsverbatim]
+  \frametitle{プロファイラ}
+  \begin{lstlisting}
+julia> Profile.print(format = :flat)
+ Count File       Function         Line
+    94 REPL.jl    eval_user_input    54
+     1 REPL.jl    eval_user_input    56
+    43 none       prof                2
+     5 none       prof                3
+    41 none       prof                4
+     5 none       prof                5
+    94 profile.jl anonymous          14
+    84 random.jl  rand!             132
+    10 reduce.jl  _mapreduce        168
+     1 reduce.jl  mapreduce_impl    274
+     5 reduce.jl  mapreduce_impl    281
+     4 reduce.jl  mapreduce_impl    285
+    95 task.jl    anonymous          96
+  \end{lstlisting}
+  \begin{itemize}
+    \item \verb|format = :flat| とすることで、関数呼び出しツリーを無視して結果をまとめられる
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[containsverbatim]
+\frametitle{プロファイラ}
+\begin{lstlisting}
+julia> open("prof.dat", "w") do io
+       Profile.print(io, col=500)
+       end
+\end{lstlisting}
+\begin{itemize}
+  \item \verb|println| などのように、第一引数に\verb|IO| 型を取ることでファイル書き出しができる
+    \begin{itemize}
+      \item ファイルに書き出してから\verb|sort -n| や\verb|grep| をするのが便利
+    \end{itemize}
+  \item \verb|col| オプション引数は、出力ファイルの最大文字幅数を指定する
+    \begin{itemize}
+      \item 出力文字数が超過すると、ファイル名などが切り詰められるのでできるだけ大きい値を指定しておくと良い
+    \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[containsverbatim]
+\frametitle{プロファイラ}
+\begin{itemize}
+\item \verb|ProfileView.jl|
+  \begin{itemize}
+    \item \verb|Base.Profile| の可視化ツール
+    \item 横軸がカウント、縦軸が関数呼び出しの深さ
+    \item マウスオーバーでファイル名・関数名などが表示される
+  \end{itemize}
+\item \verb|IProfile.jl|
+  \begin{itemize}
+    \item instrumenting profiler
+      \begin{itemize}
+        \item 日本語だとなんて言うんだろう？
+        \item \verb|gprof| みたいにスクリプトや実行ファイルにプロファイル用コードを埋め込んで、より精密に調べるプロファイラ
+      \end{itemize}
+    \item 今回ちょっと調査時間がなかった上に、
+      自分のソースに使ったら落ちたのでどんな感じかよくわかりません……
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+ \begin{frame}[containsverbatim]
+ \frametitle{メモリチェック}
+ \begin{itemize}
+   \item \verb|--track-allocation=user| オプション
+     \begin{itemize}
+       \item コードのどこでどのくらいメモリを確保しているのかを調べるオプション
+       \item これをつけて\verb|Julia| を起動すると、\verb|include| した各ファイルに対してそれぞれ\verb|*.mem| ファイルが出来る
+       \item それぞれの行数でどれだけ確保したのかが左に表示される
+       \item 目安程度にしておいたほうがいいかも？
+     \end{itemize}
+ \end{itemize}
+ \begin{lstlisting}
+        - function alloc(N::Int)
+ 65425632   xs = ones(N,N,N)
+        0   x = maximum(xs)
+ 64000064   ys = ones(N,N,N)
+        0   y = maximum(ys)
+        - end
+        - @time alloc(200)
+ \end{lstlisting}
+ \begin{itemize}
+   \item 関数の頭では、コンパイルや自動変数のスタックも表示されている？
+ \end{itemize}
+ \end{frame}
+
+ \begin{frame}[containsverbatim]
+ \frametitle{チューニングに役立つかもしれないツールとか}
+ \begin{itemize}
+   \item 公式ドキュメントの ``Performance Tips''
+     \begin{itemize}
+       \item JuliaTokyo\#1 での関さんの発表資料では実際に速度の測定をしています
+       \item Tipsや紹介ツールが時々こっそりと加筆される
+         \begin{itemize}
+           \item \verb|--track-allocation| とかおととい初めて知った
+         \end{itemize}
+     \end{itemize}
+   \item \verb|@inbounds|
+     \begin{itemize}
+       \item 配列の境界チェックを切るマクロ
+       \item 普段は境界チェックに失敗すると\verb|BoundsError| 例外が飛ぶ
+       \item \verb@--check-bounds={yes|no}@ というオプションで、マクロを無視してチェックを強制することも、逆に完全にチェックを外すことも可能
+     \end{itemize}
+   \item \verb|@inline|
+     \begin{itemize}
+       \item v0.4-dev で登場
+       \item \verb|@inline| した関数を呼び出す関数をコンパイルした時に、内側の関数をインライン展開する
+       \item モジュールの最外スコープや初回呼び出しなど、コンパイルできていない関数から呼ぶ場合、逆にオーバーヘッドが発生する
+     \end{itemize}
+ \end{itemize}
+ \end{frame}
+
+ \begin{frame}[containsverbatim]
+ \frametitle{チューニングに役立つかもしれないツールとか}
+ \begin{itemize}
+   \item \verb|NumericExtensions.jl|
+     \begin{itemize}
+       \item \verb|Base.map| やその一派を拡張・高速化するパッケージ
+       \item \verb|NumericFuns.jl| 含め、数値計算する人には神パッケージ
+       \item チューニング実例でも使います（時間があればやる）
+     \end{itemize}
+   \item \verb|NumericFuns.jl|
+     \begin{itemize}
+       \item 数値計算で使うけれど標準に入っていない関数など
+       \item \verb|C++| でいうところの関数オブジェクトのようなものの定義
+         \begin{itemize}
+           \item たとえば多変数関数を無名関数を使わずに一変数関数（のようなもの）にできる
+           \item 関数ではないので、関数適用は\verb|evaluate(f,args...)| という別の関数になっている 
+           \item 無名関数と違い、JIT コンパイルが働くようになるので、特に\verb|NumericEstensions.map| などの高階関数と組み合わせるとかなり高速化される
+           \item \verb|@inline| との組み合わせなども良さそう
+         \end{itemize}
+       \item 元々は\verb|NumericExtensions.jl| のサブモジュールだったが独立した
+     \end{itemize}
+ \end{itemize}
+ \end{frame}
+
+ \begin{frame}[containsverbatim]
+ \frametitle{チューニング実例}
+ \begin{itemize}
+   \item 1次元ランダムウォークのモンテカルロ計算
+   \item https://github.com/yomichi/JuliaTokyo2/src/randomwalk
+   \item \verb|*_version| はそれぞれチューニングを進めたものが入っている
+   \item 各ディレクトリにある\verb|prof.jl| を実行すると時間測定とプロファイリングを行う
+\begin{lstlisting}
+## before (1st_version)
+elapsed time: 5.182680705 seconds (803357776 bytes allocated, 5.34% gc time)
+
+## after (4th_version)
+elapsed time: 1.824523981 seconds (414096 bytes allocated)
+\end{lstlisting}
+\item 結論：\verb|NumericExtensions.jl| は神パッケージ
+ \end{itemize}
+ \end{frame}

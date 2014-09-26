@@ -1,0 +1,78 @@
+\section{デバッグ}
+
+\begin{frame}
+  \frametitle{}
+  {\Huge デバッグツール}
+\end{frame}
+
+\begin{frame}[containsverbatim]
+\frametitle{デバッグ用ツール}
+\begin{itemize}
+  \item \verb|Base.@show|
+    \begin{itemize}
+      \item \verb|printf| デバッグ用マクロ
+      \item 式そのものと、その値を表示できる
+        \begin{itemize}
+          \item 複数引数も、タプルという有効な式なので問題なく表示できる
+        \end{itemize}
+      \item 必要タイプ数も少ないし、ほぼデバッグ専用なので\verb|grep|も楽
+      \item 神マクロのひとつ
+    \end{itemize}
+    \begin{lstlisting}
+julia> x = 42;
+julia> @show x;
+x = 42
+julia> @show x,2x;
+(x,2x) = (42,84)
+\end{lstlisting}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[containsverbatim]
+\frametitle{デバッグ用ツール}
+\begin{itemize}
+  \item \verb|Base.@assert|
+    \begin{itemize}
+      \item 渡した式の値が偽なら式を表示して強制終了
+      \item 防衛的プログラミング用
+\begin{lstlisting}
+julia> @assert x == 42
+julia> @assert x != 42
+ERROR: assertion failed: x != 42
+ in error at error.jl:21
+ \end{lstlisting}
+ \item フラグ1つで\verb|@assert| を全部無効化する、といった機能は実はない
+   \begin{itemize}
+     \item こないだissue ができたし\footnote{\#7732}、いつかできるんじゃないでしょうか
+     \item \verb|Base.@assert| を書き換えることでむりやり無効化できる
+       \begin{lstlisting}
+julia> import Base.@assert
+julia> macro assert(ex)
+       :nothing
+       end
+       \end{lstlisting}
+   \end{itemize}
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[containsverbatim]
+\frametitle{デバッグ用ツール}
+\begin{itemize}
+ \item \verb|Debug.jl|
+   \begin{itemize}
+     \item 対話型デバッガ
+     \item ステップ実行や変数参照などそれなりに出来る
+     \item デバッグしたいブロックに予め\verb|@debug| をつけておく
+     \item ブレークポイントを予め付けたい場合\verb|@bp| をつけておく
+     \item \verb|gdb| 含めあんまり使っていないのでなんとも……
+   \end{itemize}
+ \item \verb|Logging.jl|
+   \begin{itemize}
+     \item ログ記録用ツール
+     \item ログ情報にレベルを付与することができる
+     \item 実行レベルを変えることで残す情報を取捨選択できる
+   \end{itemize}
+\end{itemize}
+\end{frame}
+

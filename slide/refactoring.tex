@@ -1,0 +1,45 @@
+\section{リファクタリング}
+
+\begin{frame}
+  \frametitle{}
+  {\Huge リファクタリングツール}
+\end{frame}
+
+\begin{frame}[containsverbatim]
+\frametitle{リファクタリング用ツール}
+\begin{itemize}
+  \item \verb|Lint.jl|
+    \begin{itemize}
+      \item Julia 版 \verb|lint|
+      \item 未使用変数とか \verb| if a = 0 | とかそういう怪しいコードを教えてくれる
+      \item 現在も更新がかなり盛ん
+    \end{itemize}
+    \begin{lstlisting}
+julia> using Lint
+
+shell> cat ex_Lint.jl
+let x = 42
+end
+
+julia> lintfile("ex_Lint.jl")
+          ex_Lint.jl [               ]    0 WARN   Local vars declared but not used: x
+    \end{lstlisting}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[containsverbatim]
+\frametitle{リファクタリング用ツール}
+\begin{itemize}
+  \item \verb|TypeCheck.jl|
+    \begin{itemize}
+      \item 型の一貫性などをチェックできる
+      \item コンパイラが最適化してくれるかどうかに効いてくる
+        \begin{description}
+          \item[checkreturntypes] 関数の返り値の型が全部同じか
+          \item[checklooptypes] ループの中で変数の型が不変か
+          \item[code\_typed] 各変数が取りうる型を併記して関数の定義を表示
+        \end{description}
+    \end{itemize}
+\end{itemize}
+\end{frame}
+
