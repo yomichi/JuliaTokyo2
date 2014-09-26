@@ -1,0 +1,11 @@
+--- ../1st_version/randomwalk.jl	2014-09-26 18:44:48.000000000 +0900
++++ randomwalk.jl	2014-09-26 19:02:29.000000000 +0900
+@@ -6,7 +6,7 @@
+   xs = zeros(Int, N)
+ 
+   for t in 1:tmax
+-    xs = map( x->update(x,p), xs)
++    map!(x->update(x,p), xs)
+     means[t+1] = mean(xs)
+     vars[t+1] = var(xs)
+   end
