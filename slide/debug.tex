@@ -73,6 +73,17 @@ julia> macro assert(ex)
      \item ログ情報にレベルを付与することができる
      \item 実行レベルを変えることで残す情報を取捨選択できる
    \end{itemize}
+ \item \verb|SIUnits.jl|
+   \begin{itemize}
+     \item 型の力でバグを防ぐことを目指すパッケージのひとつ
+       \begin{itemize}
+         \item いわゆる次元解析
+         \item 例えば質量と長さは、普通のプログラミングではともに普通の実数として表現されるが、本質的には別物
+         \item 加減は許されないが乗除は許され、さらに新たな単位を作る
+       \end{itemize}
+     \item 速度・メモリ上のオーバーヘッドも無い
+     \item 実際に使うには、SI 単位系を強制されるので正直窮屈……
+   \end{itemize}
 \end{itemize}
 \end{frame}
 

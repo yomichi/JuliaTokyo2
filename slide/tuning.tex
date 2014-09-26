@@ -6,19 +6,32 @@
 \end{frame}
 
 \begin{frame}
-\frametitle{チューニング？}
+\frametitle{チューニング？なにそれおいしいの？}
 \begin{itemize}
   \item プログラム自体の性能最適化
-  \begin{itemize}
-    \item なにを最適化したいのか考えてありますか？
-    \item 大抵は計算時間の最小化か、要求メモリの最小化
-    \item リファクタリングも保守性の最適化と言えなくもない
-  \end{itemize}
-  \item 最適化にもコスト・リソースが必要
-  \begin{itemize}
-    \item あなたのやりたいこと、本当に割に合いますか？
-    \item わざわざ時間をかけ、保守性を下げてまでやる必要はありますか？
-  \end{itemize}
+    \begin{itemize}
+    \onslide<2-> \item なにを最適化したいのか考えてありますか？
+      \begin{itemize}
+        \item 大抵は計算時間の最小化か、要求メモリの最小化
+        \item リファクタリングも保守性の最適化と言えなくもない
+      \end{itemize}
+    \onslide<3-> \item そもそも問題（要求）に対して正しい答えを返すプログラムは書けましたか？
+      \begin{itemize}
+        \item 間違ったコードをチューニングしても正しくなることはまず無い
+      \end{itemize}
+    \end{itemize}
+  \onslide<4-> \item 最適化にもコスト・リソースが必要
+    \begin{itemize}
+      \onslide<5-> \item あなたのやりたいこと、本当に割に合いますか？
+      \item わざわざ大切な時間を費やし、保守性を下げてまでやる必要はありますか？
+      \onslide<6-> \item 他にやることはないのですか？
+        \begin{itemize}
+          \onslide<7-> \item その開発時間を使って新機能を追加する
+          \onslide<8-> \item その開発時間を計算時間そのものに充てる
+          \onslide<9->\item その開発時間の分、早く帰って寝る
+        \end{itemize}
+      \onslide<10-> \item これから何度も使う、とっておきのコードは頑張って磨く価値がある
+    \end{itemize}
 \end{itemize}
 \end{frame}
 
@@ -29,19 +42,25 @@
   \item Donald Knuth
   \begin{itemize}
     {\Large
-    \item \onslide<2-> 時期尚早な最適化は諸悪の根源である \onslide
+    \onslide<2-> \item 時期尚早な最適化は諸悪の根源である \onslide
     }
   \end{itemize}
   \item Michael A. Jackson
   \begin{description}
-    \item [最適化の第一法則] \onslide<3-> するな。 \onslide
-    \item [最適化の第二法則] \onslide<4-> まだするな。（上級者限定） \onslide
+    \onslide<3-> \item [最適化の第一法則] \onslide<4-> 最適化するな。 \onslide
+    \onslide<3-> \item [最適化の第二法則] \onslide<5-> まだするな。（上級者限定） \onslide
   \end{description}
 \end{itemize}
 }
-\onslide<5-> だからといって、明らかにダメなコードを放置していても良いわけじゃない。\\
-時間をかけて、ひねったコードを産み出してまで「最適化」するのは後にしろということ。\\
-\onslide<6-> せっかくJulia ちゃんを使うんだから少しぐらいはやってみよう！
+\onslide<6->
+\begin{itemize}
+  \item だからといって、明らかにダメなコードを放置していても良いわけじゃない
+  \item 時間をかけてひねったコードを産み出してまで「最適化」するのは後にしろということ
+    \begin{itemize}
+      \onslide<7->{\tiny \item  Knuth先生もこの後すぐに「それでも、クリティカルな3\%は見逃すな」と言っているし}
+    \end{itemize}
+  \onslide<8-> \item {\normalsize せっかくJulia ちゃんを使うんだから、その速度を引き出してあげよう！}
+\end{itemize}
 \end{frame}
 
 \begin{frame}
@@ -49,18 +68,30 @@
     大前提として、正しく動くプログラム
       （テストや要求仕様などに適合する）を書き上げる
   \begin{enumerate}
-    \item プロファイラでホットスポットを探す
-    \item チューニングを試みる
-    \item テストを行って、エンバグしていないことを確かめる
-    \item 時間を測って効果を確認する
-    \item 妥協できるところまで繰り返す
+    \onslide<2-> \item プロファイラでホットスポットを探す
+      \begin{itemize}
+        \item 大抵予想外のところにあるのでツールを使うこと
+        \item 全体的に同じぐらい遅いときは諦めよう
+      \end{itemize}
+    \onslide<3-> \item チューニングを試みる
+      \begin{itemize}
+        \item アルゴリズムを変える
+        \item ライブラリや関数を変える
+        \item コンパイラやハードウェアの気持ちになって考える
+          \begin{itemize}
+            \item 計算機様が気持ちよく仕事できるようなコードを書く
+          \end{itemize}
+      \end{itemize}
+    \onslide<4-> \item テストを行って、エンバグしていないことを確かめる
+    \onslide<5-> \item 時間を測って効果を確認する
+    \onslide<6-> \item 妥協できるところまで繰り返す
   \end{enumerate}
 \end{frame}
 
 \begin{frame}[containsverbatim]
 \frametitle{Julia における性能測定ツール}
 \begin{itemize}
-  \item 全部\verb|Base| 直下にある標準ツール
+  \item 以下\verb|Base| 直下にある標準ツール
   \item 時間・メモリ両用
     \begin{itemize}
       \item \verb|@time| / \verb|@timed|
@@ -88,7 +119,7 @@
   \begin{itemize}
     \item \verb|@time(ex)| / \verb|@timed(ex)|
       \begin{itemize}
-        \item 与えた式\verb|ex| に関して、実行時間・獲得メモリ・ガベコレ時間を測定する
+        \item 与えた式\verb|ex| に関して、実行時間・要求メモリ・ガベコレ時間を測定する
         \item \verb|@time| は測定結果を標準出力に出し、\verb|@timed| は返り値として返す
         \item 基本的にはこれらを使えばOK
       \end{itemize}
@@ -160,7 +191,7 @@ ERROR: toc() without tic()
         \item ここまで紹介した関数・マクロは内部でこれを呼ぶ
         \item ゼロ点が具体的にどこかは定められていない
           \begin{itemize}
-            \item 5.8 年でオーバーフローするため
+            \item 5.8 年周期でオーバーフローするため
           \end{itemize}
       \end{itemize}
   \end{itemize}
@@ -365,11 +396,31 @@ julia> open("prof.dat", "w") do io
        \item 普段は境界チェックに失敗すると\verb|BoundsError| 例外が飛ぶ
        \item \verb@--check-bounds={yes|no}@ というオプションで、マクロを無視してチェックを強制することも、逆に完全にチェックを外すことも可能
      \end{itemize}
+ \end{itemize}
+ \end{frame}
+
+ \begin{frame}[containsverbatim]
+ \frametitle{チューニングに役立つかもしれないツールとか}
+ \begin{itemize}
+   \item \verb|@simd|
+     \begin{itemize}
+       \item ループのSIMD / ベクトル並列化
+       \item 最内ループのみ使える
+       \item \verb|@inbounds| と組み合わせる必要がある
+       \item 他にも色々な条件（仮定）が必要だが、うまくハマれば早くなる
+       \item 単純なループの場合はそもそもLLVM が自動でやってくれる
+     \end{itemize}
+   \item \verb|@parallel for| / \verb|pmap|
+     \begin{itemize}
+       \item \verb|for|および\verb|map|のプロセス並列化
+       \item Julia の並列処理の中では一番単純で使いやすい
+       \item sfchaos さんの発表で解説があるはず……
+     \end{itemize}
    \item \verb|@inline|
      \begin{itemize}
        \item v0.4-dev で登場
        \item \verb|@inline| した関数を呼び出す関数をコンパイルした時に、内側の関数をインライン展開する
-       \item モジュールの最外スコープや初回呼び出しなど、コンパイルできていない関数から呼ぶ場合、逆にオーバーヘッドが発生する
+       \item モジュールの最外スコープや初回呼び出しなど、コンパイルできていない場所から呼ぶ場合、逆にオーバーヘッドが発生する
      \end{itemize}
  \end{itemize}
  \end{frame}
@@ -389,8 +440,10 @@ julia> open("prof.dat", "w") do io
        \item \verb|C++| でいうところの関数オブジェクトのようなものの定義
          \begin{itemize}
            \item たとえば多変数関数を無名関数を使わずに一変数関数（のようなもの）にできる
-           \item 関数ではないので、関数適用は\verb|evaluate(f,args...)| という別の関数になっている 
-           \item 無名関数と違い、JIT コンパイルが働くようになるので、特に\verb|NumericEstensions.map| などの高階関数と組み合わせるとかなり高速化される
+           \item 関数ではないので、関数適用は\verb|NumericFuns.evaluate(f,args...)| という別の関数になっている 
+           \item 無名関数と違い、\verb|NumericFuns.evaluate| に関して
+             JIT コンパイルが働くようになるので、
+             特に\verb|NumericExtensions.map| などの高階関数と組み合わせるとかなり高速化される
            \item \verb|@inline| との組み合わせなども良さそう
          \end{itemize}
        \item 元々は\verb|NumericExtensions.jl| のサブモジュールだったが独立した
@@ -403,7 +456,10 @@ julia> open("prof.dat", "w") do io
  \begin{itemize}
    \item 1次元ランダムウォークのモンテカルロ計算
    \item https://github.com/yomichi/JuliaTokyo2/src/randomwalk
-   \item \verb|*_version| はそれぞれチューニングを進めたものが入っている
+   \item \verb|*_version| ディレクトリには、それぞれチューニングの各段階が入っている
+     \begin{itemize}
+       \item 今回はただひとつの\verb|map| を\verb|NumericExtensions.jl| で書きなおした
+     \end{itemize}
    \item 各ディレクトリにある\verb|prof.jl| を実行すると時間測定とプロファイリングを行う
 \begin{lstlisting}
 ## before (1st_version)
